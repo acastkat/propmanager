@@ -1,4 +1,13 @@
-const VITE_SUPABASE_URL = "https://lhazujqpnreipurezzff.supabase.co";
-const VITE_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoYXp1anFwbnJlaXB1cmV6emZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NTI5MTYsImV4cCI6MjA5NjQyODkxNn0.SyZPrpZS6btdYH6O_f_r5lACutMKHqDPI2PkXYlRBK4";
+import { createClient } from '@supabase/supabase-js'
 
-export { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY };
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl) {
+	console.error('Missing VITE_SUPABASE_URL. Check your .env file or environment variables')
+}
+if (!supabaseKey) {
+	console.error('Missing VITE_SUPABASE_ANON_KEY. Check your .env file or environment variables')
+}
+
+export const supabase = createClient(supabaseUrl, supabaseKey)
