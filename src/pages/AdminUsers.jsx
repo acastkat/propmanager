@@ -23,8 +23,8 @@ export default function AdminUsers({ session }) {
       .eq('id', session.user.id)
       .single()
 
-    // Si no es admin, no debería estar acá
-    if (profileData?.role !== 'admin') {
+    // Si no es admin ni owner, no debería estar acá
+    if (profileData?.role !== 'admin' && profileData?.role !== 'owner') {
       window.location.href = '/inicio'
       return
     }

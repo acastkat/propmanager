@@ -48,8 +48,8 @@ export default function MainLayout({ children, session, role }) {
             </NavLink>
           ))}
 
-          {/* Solo visible para admin */}
-          {role === 'admin' && (
+          {/* Solo visible para admin u owner */}
+          {(role === 'admin' || role === 'owner') && (
             <NavLink
               to="/admin/usuarios"
               className={({ isActive }) =>
