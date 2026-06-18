@@ -90,6 +90,7 @@ export default function Properties({ session }) {
   const [showForm, setShowForm]                 = useState(false)
   const [form, setForm]                         = useState(emptyForm)
   const [errors, setErrors]                     = useState({})
+  const [apiError, setApiError]                 = useState(null)
   const [selectedProp, setSelectedProp]         = useState(null)
   const [editMode, setEditMode]                 = useState(false)
   const [editForm, setEditForm]                 = useState(null)
@@ -99,9 +100,16 @@ export default function Properties({ session }) {
   useEffect(() => { fetchData() }, [])
 
   const fetchData = async () => {
-    const { data: profileData } = await supabase
+    let { data: profileData } = await supabase
       .from('profiles').select('*')
       .eq('id', session.user.id).single()
+
+    if (!profileData && session?.user?.email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles').select('*')
+        .eq('email', session.user.email).single()
+      profileData = profileByEmail
+    }
 
     const { data: propertiesData } = await supabase
       .from('properties')
@@ -152,6 +160,17 @@ export default function Properties({ session }) {
 
   // Guardar propiedad completa
   const handleSubmit = async (isIncomplete = false) => {
+    setApiError(null)
+
+    if (!validarPaso2()) {
+      setStep(1)
+      return
+    }
+    if (!validarPaso3()) {
+      setStep(2)
+      return
+    }
+
     const address = [
       form.calle, form.numero,
       form.piso  ? `Piso ${form.piso}` : '',
@@ -172,12 +191,16 @@ export default function Properties({ session }) {
         services:      form.servicios,
         is_incomplete: isIncomplete,
       })
-      .select().single()
+      .select('id').single()
 
-    if (propError || !propData) return
+    if (propError || !propData) {
+      console.error('Error creando propiedad:', propError)
+      setApiError(propError?.message || 'No se pudo crear la propiedad')
+      return
+    }
 
     if (form.estado === 'alquilada' && form.inquilino) {
-      await supabase.from('contracts').insert({
+      const { error: contractError } = await supabase.from('contracts').insert({
         property_id:   propData.id,
         tenant_name:   form.inquilino,
         start_date:    form.inicioContrato,
@@ -186,6 +209,12 @@ export default function Properties({ session }) {
         update_index:  form.indiceId,
         update_months: parseInt(form.periodicidadMeses),
       })
+
+      if (contractError) {
+        console.error('Error creando contrato:', contractError)
+        setApiError(contractError.message || 'No se pudo guardar el contrato de alquiler')
+        return
+      }
     }
 
     setShowForm(false)
@@ -582,7 +611,7 @@ export default function Properties({ session }) {
             <p className="text-sm text-blue-600 mt-1">{properties.length} propiedades registradas</p>
           </div>
           <button
-            onClick={() => { setShowForm(true); setStep(0); setForm(emptyForm); setErrors({}) }}
+            onClick={() => { setShowForm(true); setStep(0); setForm(emptyForm); setErrors({}); setApiError(null) }}
             className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             + Nueva propiedad
@@ -594,6 +623,12 @@ export default function Properties({ session }) {
           <div className="bg-white rounded-xl border border-stone-200 p-8 mb-8">
 
             {/* Stepper */}
+            {apiError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 mb-6">
+                <strong className="block mb-1">No se pudo guardar la propiedad:</strong>
+                <span>{apiError}</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 mb-8">
               {stepLabels.map((label, i) => (
                 <div key={i} className="flex items-center gap-2">
