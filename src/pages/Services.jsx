@@ -52,8 +52,14 @@ export default function Services({ session }) {
   useEffect(() => { fetchData() }, [])
 
   const fetchData = async () => {
-    const { data: profileData } = await supabase
+    let { data: profileData } = await supabase
       .from('profiles').select('*').eq('id', session.user.id).single()
+
+    if (!profileData && session?.user?.email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles').select('*').eq('email', session.user.email).single()
+      profileData = profileByEmail
+    }
     const { data: propertiesData } = await supabase
       .from('properties').select('*').eq('user_id', session.user.id)
     const propIds = (propertiesData || []).map(p => p.id)

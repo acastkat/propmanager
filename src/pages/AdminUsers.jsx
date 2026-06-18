@@ -17,11 +17,21 @@ export default function AdminUsers({ session }) {
   }, [])
 
   const fetchData = async () => {
-    const { data: profileData } = await supabase
+    let { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single()
+
+    // Fallback: si no encuentra por id, intentar buscar por email
+    if (!profileData && session?.user?.email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', session.user.email)
+        .single()
+      profileData = profileByEmail
+    }
 
     // Si no es admin ni owner, no debería estar acá
     if (profileData?.role !== 'admin' && profileData?.role !== 'owner') {

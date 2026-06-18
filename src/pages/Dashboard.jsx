@@ -14,11 +14,20 @@ export default function Dashboard({ session }) {
 
   const fetchData = async () => {
     // Traer perfil del usuario
-    const { data: profileData } = await supabase
+    let { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single()
+
+    if (!profileData && session?.user?.email) {
+      const { data: profileByEmail } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', session.user.email)
+        .single()
+      profileData = profileByEmail
+    }
 
     // Traer propiedades
     const { data: propertiesData } = await supabase

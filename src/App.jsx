@@ -21,6 +21,9 @@ function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
+      // Temporary debug log to inspect session in browser console
+      // Remove this after debugging
+      console.log('DEBUG SESSION', session)
     })
 
     // Escuchar cambios de sesión (login, logout)
