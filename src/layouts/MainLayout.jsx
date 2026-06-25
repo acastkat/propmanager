@@ -49,20 +49,20 @@ export default function MainLayout({ children, session, role }) {
           ))}
 
           {/* Solo visible para admin u owner */}
-          {(role === 'admin' || role === 'owner') && (
-            <NavLink
-              to="/admin/usuarios"
-              className={({ isActive }) =>
-                `flex items-center px-4 py-3 rounded-lg text-sm transition-colors ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-900 font-medium border-l-4 border-blue-600'
-                    : 'text-stone-500 hover:bg-stone-200'
-                }`
-              }
-            >
-              Usuarios
-            </NavLink>
-          )}
+          {role === 'admin' && (
+  <NavLink
+    to="/admin/usuarios"
+    className={({ isActive }) =>
+      `flex items-center px-4 py-3 rounded-lg text-sm transition-colors ${
+        isActive
+          ? 'bg-blue-50 text-blue-900 font-medium border-l-4 border-blue-600'
+          : 'text-stone-500 hover:bg-stone-200'
+      }`
+    }
+  >
+    Usuarios
+  </NavLink>
+)}
         </nav>
 
         {/* Usuario y logout */}

@@ -100,23 +100,50 @@ export default function Properties({ session }) {
   useEffect(() => { fetchData() }, [])
 
   const fetchData = async () => {
-    let { data: profileData } = await supabase
+    setApiError(null)
+
+    const { data: profileData, error: profileError } = await supabase
       .from('profiles').select('*')
       .eq('id', session.user.id).single()
 
-    if (!profileData && session?.user?.email) {
-      const { data: profileByEmail } = await supabase
-        .from('profiles').select('*')
-        .eq('email', session.user.email).single()
-      profileData = profileByEmail
+    if (profileError) {
+      console.error('Error cargando perfil:', profileError)
+      setApiError(profileError?.message || profileError?.details || JSON.stringify(profileError))
+      setLoading(false)
+      return
     }
 
-    const { data: propertiesData } = await supabase
+    let finalProfile = profileData
+    if (!finalProfile && session?.user?.email) {
+      const { data: profileByEmail, error: profileByEmailError } = await supabase
+        .from('profiles').select('*')
+        .eq('email', session.user.email).single()
+
+      if (profileByEmailError) {
+        console.error('Error cargando perfil por email:', profileByEmailError)
+        setApiError(profileByEmailError?.message || profileByEmailError?.details || JSON.stringify(profileByEmailError))
+        setLoading(false)
+        return
+      }
+
+      finalProfile = profileByEmail
+    }
+
+    const { data: propertiesData, error: propertiesError } = await supabase
       .from('properties')
       .select('*, contracts(*)')
       .eq('user_id', session.user.id)
 
-    setProfile(profileData)
+    if (propertiesError) {
+      console.error('Error cargando propiedades:', propertiesError)
+      setApiError(propertiesError?.message || propertiesError?.details || JSON.stringify(propertiesError))
+      setProfile(finalProfile)
+      setProperties([])
+      setLoading(false)
+      return
+    }
+
+    setProfile(finalProfile)
     setProperties(propertiesData || [])
     setLoading(false)
   }
@@ -162,6 +189,11 @@ export default function Properties({ session }) {
   const handleSubmit = async (isIncomplete = false) => {
     setApiError(null)
 
+    if (!session?.user?.id) {
+      setApiError('Sesión inválida. Por favor volvé a iniciar sesión.')
+      return
+    }
+
     if (!validarPaso2()) {
       setStep(1)
       return
@@ -195,7 +227,9 @@ export default function Properties({ session }) {
 
     if (propError || !propData) {
       console.error('Error creando propiedad:', propError)
-      setApiError(propError?.message || 'No se pudo crear la propiedad')
+      setApiError(
+        propError?.message || propError?.details || JSON.stringify(propError) || 'No se pudo crear la propiedad'
+      )
       return
     }
 
@@ -212,7 +246,9 @@ export default function Properties({ session }) {
 
       if (contractError) {
         console.error('Error creando contrato:', contractError)
-        setApiError(contractError.message || 'No se pudo guardar el contrato de alquiler')
+        setApiError(
+          contractError?.message || contractError?.details || JSON.stringify(contractError) || 'No se pudo guardar el contrato de alquiler'
+        )
         return
       }
     }
