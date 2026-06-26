@@ -2,12 +2,35 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import MainLayout from '../layouts/MainLayout'
 
+const emptyForm = {
+  first_name: '',
+  last_name: '',
+  email: '',
+  password: '',
+  role: 'owner',
+}
+
+// Reglas de password segura
+function checkPasswordRules(password) {
+  return {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+  }
+}
+
+function isPasswordValid(password) {
+  const rules = checkPasswordRules(password)
+  return rules.length && rules.upper && rules.lower && rules.number
+}
+
 export default function AdminUsers({ session }) {
   const [profile, setProfile] = useState(null)
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ email: '', full_name: '', password: '' })
+  const [form, setForm] = useState(emptyForm)
   const [formLoading, setFormLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
@@ -23,7 +46,6 @@ export default function AdminUsers({ session }) {
       .eq('id', session.user.id)
       .single()
 
-    // Fallback: si no encuentra por id, intentar buscar por email
     if (!profileData && session?.user?.email) {
       const { data: profileByEmail } = await supabase
         .from('profiles')
@@ -33,7 +55,6 @@ export default function AdminUsers({ session }) {
       profileData = profileByEmail
     }
 
-    // Si no es admin ni owner, no debería estar acá
     if (profileData?.role !== 'admin' && profileData?.role !== 'owner') {
       window.location.href = '/inicio'
       return
@@ -51,9 +72,17 @@ export default function AdminUsers({ session }) {
 
   const handleCreateUser = async (e) => {
     e.preventDefault()
-    setFormLoading(true)
     setError(null)
     setSuccess(null)
+
+    if (!isPasswordValid(form.password)) {
+      setError('La contraseña no cumple con los requisitos de seguridad')
+      return
+    }
+
+    setFormLoading(true)
+
+    const fullName = `${form.first_name} ${form.last_name}`.trim()
 
     // Crear usuario en Supabase Auth
     const { data, error: authError } = await supabase.auth.admin.createUser({
@@ -68,14 +97,14 @@ export default function AdminUsers({ session }) {
       return
     }
 
-    // Crear perfil en la tabla profiles
+    // Crear perfil en la tabla profiles, con el rol elegido
     const { error: profileError } = await supabase
       .from('profiles')
       .insert({
         id: data.user.id,
         email: form.email,
-        full_name: form.full_name,
-        role: 'owner',
+        full_name: fullName,
+        role: form.role,
       })
 
     if (profileError) {
@@ -84,8 +113,8 @@ export default function AdminUsers({ session }) {
       return
     }
 
-    setSuccess(`Usuario ${form.email} creado correctamente`)
-    setForm({ email: '', full_name: '', password: '' })
+    setSuccess(`Usuario ${form.email} creado correctamente como ${form.role}`)
+    setForm(emptyForm)
     setShowForm(false)
     setFormLoading(false)
     fetchData()
@@ -96,6 +125,8 @@ export default function AdminUsers({ session }) {
     owner: { text: 'text-stone-600', bg: 'bg-stone-100' },
     demo:  { text: 'text-amber-700', bg: 'bg-amber-50'  },
   }
+
+  const rules = checkPasswordRules(form.password)
 
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
@@ -116,7 +147,7 @@ export default function AdminUsers({ session }) {
             </p>
           </div>
           <button
-            onClick={() => setShowForm(!showForm)}
+            onClick={() => { setShowForm(!showForm); setForm(emptyForm); setError(null) }}
             className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
           >
             + Nuevo usuario
@@ -137,20 +168,39 @@ export default function AdminUsers({ session }) {
               Crear nuevo usuario
             </h2>
             <form onSubmit={handleCreateUser} className="space-y-4">
+
+              {/* Nombre y apellido */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-stone-500 block mb-1">
-                    Nombre completo
+                    Nombre
                   </label>
                   <input
                     type="text"
                     required
-                    value={form.full_name}
-                    onChange={e => setForm({ ...form, full_name: e.target.value })}
-                    placeholder="Martin Garcia"
+                    value={form.first_name}
+                    onChange={e => setForm({ ...form, first_name: e.target.value })}
+                    placeholder="Martín"
                     className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="text-xs text-stone-500 block mb-1">
+                    Apellido
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={form.last_name}
+                    onChange={e => setForm({ ...form, last_name: e.target.value })}
+                    placeholder="García"
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Email y rol */}
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-stone-500 block mb-1">
                     Email
@@ -164,7 +214,22 @@ export default function AdminUsers({ session }) {
                     className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                <div>
+                  <label className="text-xs text-stone-500 block mb-1">
+                    Rol de usuario
+                  </label>
+                  <select
+                    value={form.role}
+                    onChange={e => setForm({ ...form, role: e.target.value })}
+                    className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="owner">Propietario (owner)</option>
+                    <option value="admin">Administrador (admin)</option>
+                  </select>
+                </div>
               </div>
+
+              {/* Contraseña */}
               <div>
                 <label className="text-xs text-stone-500 block mb-1">
                   Contraseña inicial
@@ -174,9 +239,27 @@ export default function AdminUsers({ session }) {
                   required
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Creá una contraseña segura"
                   className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
+
+                {/* Indicador de requisitos */}
+                {form.password.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className={`text-xs flex items-center gap-1.5 ${rules.length ? 'text-green-600' : 'text-stone-400'}`}>
+                      <span>{rules.length ? '✓' : '○'}</span> Mínimo 8 caracteres
+                    </p>
+                    <p className={`text-xs flex items-center gap-1.5 ${rules.upper ? 'text-green-600' : 'text-stone-400'}`}>
+                      <span>{rules.upper ? '✓' : '○'}</span> Al menos una mayúscula
+                    </p>
+                    <p className={`text-xs flex items-center gap-1.5 ${rules.lower ? 'text-green-600' : 'text-stone-400'}`}>
+                      <span>{rules.lower ? '✓' : '○'}</span> Al menos una minúscula
+                    </p>
+                    <p className={`text-xs flex items-center gap-1.5 ${rules.number ? 'text-green-600' : 'text-stone-400'}`}>
+                      <span>{rules.number ? '✓' : '○'}</span> Al menos un número
+                    </p>
+                  </div>
+                )}
               </div>
 
               {error && (
