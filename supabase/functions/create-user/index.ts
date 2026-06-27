@@ -1,16 +1,4 @@
-// supabase/functions/create-user/index.ts
-//
-// Edge Function que crea un usuario nuevo de forma segura.
-// La service_role key vive solo acá, nunca en el frontend.
-//
-// Flujo:
-// 1. Verifica que quien llama esté logueado y sea admin u owner
-// 2. Crea el usuario en Supabase Auth con una contraseña temporal
-// 3. Crea el perfil en la tabla profiles, marcado como "debe cambiar password"
-// 4. Devuelve éxito o el error correspondiente
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,25 +6,21 @@ const corsHeaders = {
 }
 
 Deno.serve(async (req) => {
-  // Responder a la verificación CORS que hace el browser antes del POST real
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Cliente con permisos de administrador (usa la service_role key,
-    // disponible automáticamente como variable de entorno en Supabase)
-// El sistema nuevo de Supabase guarda las keys secretas como JSON
-// en SUPABASE_SECRET_KEYS. Extraemos la service_role de ahí.
-const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}')
-const serviceRoleKey = secretKeys.service_role ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}')
+    const serviceRoleKey = secretKeys.service_role ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-const supabaseAdmin = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  serviceRoleKey
-)
-    // Cliente que respeta el token del usuario que está llamando,
-    // para verificar quién es y qué permisos tiene
+    console.log('DEBUG — serviceRoleKey existe:', !!serviceRoleKey, 'longitud:', serviceRoleKey.length)
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      serviceRoleKey
+    )
+
     const authHeader = req.headers.get('Authorization')
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -44,32 +28,40 @@ const supabaseAdmin = createClient(
       { global: { headers: { Authorization: authHeader ?? '' } } }
     )
 
-    // 1. Verificar que quien llama está logueado
     const { data: { user: callingUser }, error: authError } =
       await supabaseClient.auth.getUser()
 
+    console.log('DEBUG — authError:', authError, 'callingUser.id:', callingUser?.id)
+
     if (authError || !callingUser) {
       return new Response(
-        JSON.stringify({ error: 'No autorizado' }),
+        JSON.stringify({ error: 'No autorizado', debug: authError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-// 2. Verificar que quien llama es admin u owner
-    const { data: callingProfile } = await supabaseAdmin
+    const { data: callingProfile, error: profileFetchError } = await supabaseAdmin
       .from('profiles')
       .select('role')
       .eq('id', callingUser.id)
       .single()
 
+    console.log('DEBUG — profileFetchError:', profileFetchError, 'callingProfile:', callingProfile)
+
     if (!callingProfile || (callingProfile.role !== 'admin' && callingProfile.role !== 'owner')) {
       return new Response(
-        JSON.stringify({ error: 'No tenés permisos para crear usuarios' }),
+        JSON.stringify({
+          error: 'No tenés permisos para crear usuarios',
+          debug: {
+            callingUserId: callingUser.id,
+            callingProfile,
+            profileFetchError: profileFetchError?.message,
+          },
+        }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // 3. Leer los datos del nuevo usuario desde el body de la petición
     const { email, password, first_name, last_name, role } = await req.json()
 
     if (!email || !password || !first_name || !last_name) {
@@ -81,7 +73,6 @@ const supabaseAdmin = createClient(
 
     const fullName = `${first_name} ${last_name}`.trim()
 
-    // 4. Crear el usuario en Supabase Auth
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -95,7 +86,6 @@ const supabaseAdmin = createClient(
       )
     }
 
-    // 5. Crear el perfil correspondiente, marcado para forzar cambio de password
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -107,11 +97,9 @@ const supabaseAdmin = createClient(
       })
 
     if (profileError) {
-      // El usuario en Auth ya se creó, pero el perfil falló — lo borramos
-      // para no dejar un usuario "fantasma" sin perfil asociado
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id)
       return new Response(
-        JSON.stringify({ error: 'No se pudo crear el perfil del usuario' }),
+        JSON.stringify({ error: 'No se pudo crear el perfil del usuario', debug: profileError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
