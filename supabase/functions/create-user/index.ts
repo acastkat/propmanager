@@ -88,20 +88,22 @@ console.log('DEBUG — serviceRoleKey final existe:', !!serviceRoleKey, 'longitu
       )
     }
 
+    // El trigger handle_new_user ya creó la fila base del perfil
+    // automáticamente al crearse el usuario en Auth. Acá solo
+    // completamos los datos que la función conoce y el trigger no.
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: newUser.user.id,
-        email,
+      .update({
         full_name: fullName,
         role: role || 'owner',
         must_change_password: true,
       })
+      .eq('id', newUser.user.id)
 
     if (profileError) {
       await supabaseAdmin.auth.admin.deleteUser(newUser.user.id)
       return new Response(
-        JSON.stringify({ error: 'No se pudo crear el perfil del usuario', debug: profileError.message }),
+        JSON.stringify({ error: 'No se pudo completar el perfil del usuario', debug: profileError.message }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
