@@ -14,10 +14,7 @@ Deno.serve(async (req) => {
     const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}')
     const serviceRoleKey = secretKeys.service_role ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
-const rawSecretKeys = Deno.env.get('SUPABASE_SECRET_KEYS') ?? 'NO EXISTE'
-console.log('DEBUG — SUPABASE_SECRET_KEYS crudo (primeros 50 chars):', rawSecretKeys.substring(0, 50))
-console.log('DEBUG — SUPABASE_SERVICE_ROLE_KEY existe:', !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
-console.log('DEBUG — serviceRoleKey final existe:', !!serviceRoleKey, 'longitud:', serviceRoleKey.length)
+
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       serviceRoleKey
@@ -33,7 +30,6 @@ console.log('DEBUG — serviceRoleKey final existe:', !!serviceRoleKey, 'longitu
     const { data: { user: callingUser }, error: authError } =
       await supabaseClient.auth.getUser()
 
-    console.log('DEBUG — authError:', authError, 'callingUser.id:', callingUser?.id)
 
     if (authError || !callingUser) {
       return new Response(
@@ -48,7 +44,6 @@ console.log('DEBUG — serviceRoleKey final existe:', !!serviceRoleKey, 'longitu
       .eq('id', callingUser.id)
       .single()
 
-    console.log('DEBUG — profileFetchError:', profileFetchError, 'callingProfile:', callingProfile)
 
     if (!callingProfile || (callingProfile.role !== 'admin' && callingProfile.role !== 'owner')) {
       return new Response(
