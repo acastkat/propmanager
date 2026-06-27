@@ -26,11 +26,15 @@ Deno.serve(async (req) => {
   try {
     // Cliente con permisos de administrador (usa la service_role key,
     // disponible automáticamente como variable de entorno en Supabase)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+// El sistema nuevo de Supabase guarda las keys secretas como JSON
+// en SUPABASE_SECRET_KEYS. Extraemos la service_role de ahí.
+const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') ?? '{}')
+const serviceRoleKey = secretKeys.service_role ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 
+const supabaseAdmin = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  serviceRoleKey
+)
     // Cliente que respeta el token del usuario que está llamando,
     // para verificar quién es y qué permisos tiene
     const authHeader = req.headers.get('Authorization')
