@@ -9,7 +9,8 @@
 // 3. Crea el perfil en la tabla profiles, marcado como "debe cambiar password"
 // 4. Devuelve éxito o el error correspondiente
 
-import { createClient } from 'jsr:@supabase/supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,8 +51,19 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 2. Verificar que quien llama es admin u owner
-    console.log('callingUser.id:', callingUser.id, 'callingProfile:', callingProfile)
+// 2. Verificar que quien llama es admin u owner
+    const { data: callingProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('role')
+      .eq('id', callingUser.id)
+      .single()
+
+    if (!callingProfile || (callingProfile.role !== 'admin' && callingProfile.role !== 'owner')) {
+      return new Response(
+        JSON.stringify({ error: 'No tenés permisos para crear usuarios' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // 3. Leer los datos del nuevo usuario desde el body de la petición
     const { email, password, first_name, last_name, role } = await req.json()
