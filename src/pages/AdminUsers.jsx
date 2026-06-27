@@ -10,7 +10,6 @@ const emptyForm = {
   role: 'owner',
 }
 
-// Reglas de password segura
 function checkPasswordRules(password) {
   return {
     length: password.length >= 8,
@@ -82,41 +81,31 @@ export default function AdminUsers({ session }) {
 
     setFormLoading(true)
 
-    const fullName = `${form.first_name} ${form.last_name}`.trim()
-
-    // Crear usuario en Supabase Auth
-    const { data, error: authError } = await supabase.auth.admin.createUser({
-      email: form.email,
-      password: form.password,
-      email_confirm: true,
+    const { data, error: fnError } = await supabase.functions.invoke('create-user', {
+      body: {
+        email: form.email,
+        password: form.password,
+        first_name: form.first_name,
+        last_name: form.last_name,
+        role: form.role,
+      },
     })
 
-    if (authError) {
-      setError('No se pudo crear el usuario: ' + authError.message)
-      setFormLoading(false)
+    setFormLoading(false)
+
+    if (fnError) {
+      setError('No se pudo crear el usuario: ' + fnError.message)
       return
     }
 
-    // Crear perfil en la tabla profiles, con el rol elegido
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        id: data.user.id,
-        email: form.email,
-        full_name: fullName,
-        role: form.role,
-      })
-
-    if (profileError) {
-      setError('Usuario creado pero hubo un error al guardar el perfil')
-      setFormLoading(false)
+    if (data?.error) {
+      setError(data.error)
       return
     }
 
-    setSuccess(`Usuario ${form.email} creado correctamente como ${form.role}`)
+    setSuccess(`Usuario ${form.email} creado correctamente como ${form.role}. Deberá cambiar su contraseña al iniciar sesión por primera vez.`)
     setForm(emptyForm)
     setShowForm(false)
-    setFormLoading(false)
     fetchData()
   }
 
@@ -138,7 +127,6 @@ export default function AdminUsers({ session }) {
     <MainLayout session={session} role={profile?.role}>
       <div className="p-8">
 
-        {/* Header */}
         <div className="bg-blue-50 rounded-2xl px-8 py-6 mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-blue-900">Usuarios</h1>
@@ -154,14 +142,12 @@ export default function AdminUsers({ session }) {
           </button>
         </div>
 
-        {/* Mensaje de éxito */}
         {success && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-6 py-4 mb-6">
             <p className="text-sm text-green-700">{success}</p>
           </div>
         )}
 
-        {/* Formulario */}
         {showForm && (
           <div className="bg-white rounded-xl border border-stone-200 p-6 mb-8">
             <h2 className="text-sm font-medium text-stone-700 mb-6">
@@ -169,7 +155,6 @@ export default function AdminUsers({ session }) {
             </h2>
             <form onSubmit={handleCreateUser} className="space-y-4">
 
-              {/* Nombre y apellido */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-stone-500 block mb-1">
@@ -199,7 +184,6 @@ export default function AdminUsers({ session }) {
                 </div>
               </div>
 
-              {/* Email y rol */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-stone-500 block mb-1">
@@ -229,21 +213,19 @@ export default function AdminUsers({ session }) {
                 </div>
               </div>
 
-              {/* Contraseña */}
               <div>
                 <label className="text-xs text-stone-500 block mb-1">
-                  Contraseña inicial
+                  Contraseña temporal
                 </label>
                 <input
                   type="password"
                   required
                   value={form.password}
                   onChange={e => setForm({ ...form, password: e.target.value })}
-                  placeholder="Creá una contraseña segura"
+                  placeholder="El usuario deberá cambiarla al ingresar"
                   className="w-full border border-stone-200 rounded-lg px-3 py-2.5 text-sm text-stone-800 bg-stone-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
 
-                {/* Indicador de requisitos */}
                 {form.password.length > 0 && (
                   <div className="mt-2 space-y-1">
                     <p className={`text-xs flex items-center gap-1.5 ${rules.length ? 'text-green-600' : 'text-stone-400'}`}>
@@ -260,6 +242,10 @@ export default function AdminUsers({ session }) {
                     </p>
                   </div>
                 )}
+
+                <p className="text-xs text-stone-400 mt-2">
+                  El usuario va a tener que cambiar esta contraseña la primera vez que inicie sesión.
+                </p>
               </div>
 
               {error && (
@@ -288,7 +274,6 @@ export default function AdminUsers({ session }) {
           </div>
         )}
 
-        {/* Lista de usuarios */}
         <div className="bg-white rounded-xl border border-stone-200">
           <div className="px-6 py-4 border-b border-stone-100">
             <p className="text-xs font-medium text-stone-400 uppercase tracking-wider">
