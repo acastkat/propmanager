@@ -18,22 +18,32 @@ function formatCurrency(value) {
   return '$ ' + num.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Calcula la fecha de actualización de monto que corresponde al ciclo vigente
+// Calcula la fecha de la PRÓXIMA actualización de monto que corresponde.
+// La fecha base (inicio del contrato, o última actualización registrada)
+// NUNCA se considera una actualización vencida en sí misma — la primera
+// actualización real ocurre recién "update_months" meses después de la base.
 function calcNextUpdate(contract) {
   if (!contract.update_months || !contract.start_date) return null
+
   const base = contract.last_update_date
     ? new Date(contract.last_update_date)
     : new Date(contract.start_date)
-  let next = new Date(base)
-  const today = new Date()
-  let currentDue = null
 
-  while (next <= today) {
-    currentDue = new Date(next)
+  // Arrancamos directamente en el primer ciclo posterior a la base,
+  // nunca en la fecha base misma.
+  let next = new Date(base)
+  next.setMonth(next.getMonth() + contract.update_months)
+
+  // Si por algún motivo esa fecha ya quedó muy en el pasado
+  // (por ejemplo, el usuario no actualizó en varios ciclos),
+  // avanzamos hasta encontrar el próximo vencimiento real,
+  // pero SIEMPRE estrictamente posterior a la base.
+  const today = new Date()
+  while (next < today) {
     next.setMonth(next.getMonth() + contract.update_months)
   }
 
-  return currentDue || next
+  return next
 }
 
 // Modal para registrar actualización de monto
