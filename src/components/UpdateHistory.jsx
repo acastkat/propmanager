@@ -48,27 +48,33 @@ export default function UpdateHistory({ contractId, initialUpdates }) {
   )
 
   return (
-    <div className="w-full overflow-x-auto">
-      <table className="w-full text-left mb-2">
-        <thead>
-          <tr className="text-xs text-stone-700 ">
-            <th className="px-3 py-2">Fecha de actualización</th>
-            <th className="px-3 py-2">Monto</th>
-            <th className="px-3 py-2">Actualiza por</th>
-            <th className="px-3 py-2">Observaciones</th>
+  <div className="w-full overflow-x-auto">
+    <table className="w-full text-left mb-2 table-fixed">
+      <colgroup>
+        <col className="w-36" />
+        <col className="w-32" />
+        <col className="w-32" />
+        <col />
+      </colgroup>
+      <thead>
+        <tr className="text-xs text-stone-700">
+          <th className="px-3 py-2">Fecha de actualización</th>
+          <th className="px-3 py-2">Monto</th>
+          <th className="px-3 py-2">Actualiza por</th>
+          <th className="px-3 py-2">Observaciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {updates.map((u) => (
+          <tr key={u.id} className="border-t border-stone-100 last:border-b">
+            <td className="px-3 py-3 align-top text-stone-600 whitespace-nowrap">{formatDate(u.update_date)}</td>
+            <td className="px-3 py-3 align-top font-medium text-stone-800 whitespace-nowrap">{formatCurrency(u.new_amount)}</td>
+            <td className="px-3 py-3 align-top text-stone-600 whitespace-nowrap">{u.index_used || '—'}</td>
+            <td className="px-3 py-3 align-top text-stone-600">{u.notes || '—'}</td>
           </tr>
-        </thead>
-        <tbody>
-          {updates.map((u) => (
-            <tr key={u.id} className="border-t border-stone-100 last:border-b">
-              <td className="px-3 py-3 align-top text-stone-600">{formatDate(u.update_date)}</td>
-              <td className="px-3 py-3 align-top font-medium text-stone-800">{formatCurrency(u.new_amount)}</td>
-              <td className="px-3 py-3 align-top text-stone-600">{u.index_used || '—'}</td>
-              <td className="px-3 py-3 align-top text-stone-600">{u.notes || '—'}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
+        ))}
+      </tbody>
+    </table>
+  </div>
+)
 }
