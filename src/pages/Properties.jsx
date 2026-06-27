@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import MainLayout from '../layouts/MainLayout'
+import UpdateHistory from '../components/UpdateHistory'
 
 const INDICES = [
   { id: 'ICL',    label: 'ICL — Índice de Contratos de Locación' },
@@ -594,25 +595,32 @@ export default function Properties({ session }) {
           ) : (
             <>
               {contract ? (
-                <div className="bg-white rounded-xl border border-stone-200 p-6 mb-6">
-                  <h2 className="text-sm font-medium text-stone-700 mb-4">Datos del contrato</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { k: 'Inquilino',        v: contract.tenant_name },
-                      { k: 'Alquiler mensual', v: formatCurrency(contract.monthly_rent) },
-                      { k: 'Inicio contrato',  v: contract.start_date },
-                      { k: 'Fin contrato',     v: contract.end_date   },
-                      { k: 'Índice',           v: contract.update_index  || '—' },
-                      { k: 'Actualización',    v: contract.update_months ? `Cada ${contract.update_months} meses` : '—' },
-                    ].map((row, i) => (
-                      <div key={i} className="bg-stone-50 rounded-lg px-4 py-3">
-                        <p className="text-xs text-stone-400 mb-1">{row.k}</p>
-                        <p className="text-sm font-medium text-stone-800">{row.v}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
+  <div className="bg-white rounded-xl border border-stone-200 p-6 mb-6">
+    <h2 className="text-sm font-medium text-stone-700 mb-4">Datos del contrato</h2>
+    <div className="grid grid-cols-2 gap-4">
+      {[
+        { k: 'Inquilino',        v: contract.tenant_name },
+        { k: 'Alquiler mensual', v: formatCurrency(contract.monthly_rent) },
+        { k: 'Inicio contrato',  v: contract.start_date },
+        { k: 'Fin contrato',     v: contract.end_date   },
+        { k: 'Índice',           v: contract.update_index  || '—' },
+        { k: 'Actualización',    v: contract.update_months ? `Cada ${contract.update_months} meses` : '—' },
+      ].map((row, i) => (
+        <div key={i} className="bg-stone-50 rounded-lg px-4 py-3">
+          <p className="text-xs text-stone-400 mb-1">{row.k}</p>
+          <p className="text-sm font-medium text-stone-800">{row.v}</p>
+        </div>
+      ))}
+    </div>
+
+    {contract.update_months && (
+      <div className="mt-6 pt-6 border-t border-stone-100">
+        <h3 className="text-sm font-medium text-stone-700 mb-3">Historial de actualizaciones</h3>
+        <UpdateHistory contractId={contract.id} />
+      </div>
+    )}
+  </div>
+) : (
                 <div className="bg-white rounded-xl border border-stone-200 px-6 py-8 text-center mb-6">
                   <p className="text-sm text-stone-400">No hay contrato registrado para esta propiedad</p>
                 </div>
