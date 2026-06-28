@@ -11,22 +11,20 @@ import Alerts from './pages/Alerts'
 import AdminUsers from './pages/AdminUsers'
 import Demo from './pages/Demo'
 import UpdateHistoryDemo from './pages/UpdateHistoryDemo'
+import ForcePasswordChange from './pages/ForcePasswordChange'
 
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [mustChangePassword, setMustChangePassword] = useState(false)
+  const [checkingProfile, setCheckingProfile] = useState(true)
 
   useEffect(() => {
-    // Verificar si hay una sesión activa al cargar la app
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
-      // Temporary debug log to inspect session in browser console
-      // Remove this after debugging
-      console.log('DEBUG SESSION', session)
     })
 
-    // Escuchar cambios de sesión (login, logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setSession(session)
@@ -36,11 +34,44 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (loading) {
+  // Cada vez que cambia la sesión, verificamos si ese usuario
+  // tiene pendiente el cambio obligatorio de contraseña
+  useEffect(() => {
+    if (!session?.user?.id) {
+      setMustChangePassword(false)
+      setCheckingProfile(false)
+      return
+    }
+
+    setCheckingProfile(true)
+    supabase
+      .from('profiles')
+      .select('must_change_password')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data }) => {
+        setMustChangePassword(!!data?.must_change_password)
+        setCheckingProfile(false)
+      })
+  }, [session])
+
+  if (loading || (session && checkingProfile)) {
     return (
       <div className="flex items-center justify-center h-screen bg-stone-50">
         <p className="text-stone-400 text-sm">Cargando...</p>
       </div>
+    )
+  }
+
+  // Si el usuario está logueado pero tiene pendiente el cambio
+  // de contraseña, lo interceptamos antes de mostrar cualquier
+  // otra cosa — no puede navegar a ningún lado hasta cambiarla
+  if (session && mustChangePassword) {
+    return (
+      <ForcePasswordChange
+        session={session}
+        onPasswordChanged={() => setMustChangePassword(false)}
+      />
     )
   }
 
@@ -99,12 +130,6 @@ function App() {
         path="/"
         element={<Navigate to={session ? "/inicio" : "/login"} />}
       />
-
-      {/* Ruta Pagos */}
-      <Route
-        path="/pagos"
-        element={session ? <Payments session={session} /> : <Navigate to="/login" />}
-/>
     </Routes>
   )
 }
