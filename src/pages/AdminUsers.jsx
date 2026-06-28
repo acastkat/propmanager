@@ -33,6 +33,9 @@ export default function AdminUsers({ session }) {
   const [formLoading, setFormLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
+  const [pauseModalUser, setPauseModalUser] = useState(null)
+  const [deleteModalUser, setDeleteModalUser] = useState(null)
+  const [actionLoading, setActionLoading] = useState(false)
 
   useEffect(() => {
     fetchData()
@@ -108,6 +111,48 @@ export default function AdminUsers({ session }) {
     setShowForm(false)
     fetchData()
   }
+
+  const handleTogglePause = async () => {
+  setActionLoading(true)
+  const newPausedState = !pauseModalUser.is_paused
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ is_paused: newPausedState })
+    .eq('id', pauseModalUser.id)
+
+  setActionLoading(false)
+
+  if (error) {
+    setError('No se pudo actualizar el estado del usuario: ' + error.message)
+  } else {
+    setSuccess(
+      newPausedState
+        ? `Usuario ${pauseModalUser.email} pausado correctamente.`
+        : `Usuario ${pauseModalUser.email} reactivado correctamente.`
+    )
+    fetchData()
+  }
+  setPauseModalUser(null)
+}
+
+const handleDeleteUser = async () => {
+  setActionLoading(true)
+
+  const { data, error: fnError } = await supabase.functions.invoke('delete-user', {
+    body: { userId: deleteModalUser.id },
+  })
+
+  setActionLoading(false)
+
+  if (fnError || data?.error) {
+    setError('No se pudo eliminar el usuario: ' + (fnError?.message || data?.error))
+  } else {
+    setSuccess(`Usuario ${deleteModalUser.email} eliminado correctamente.`)
+    fetchData()
+  }
+  setDeleteModalUser(null)
+}
 
   const roleColors = {
     admin: { text: 'text-blue-700',  bg: 'bg-blue-50'  },

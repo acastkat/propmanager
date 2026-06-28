@@ -12,11 +12,13 @@ import AdminUsers from './pages/AdminUsers'
 import Demo from './pages/Demo'
 import UpdateHistoryDemo from './pages/UpdateHistoryDemo'
 import ForcePasswordChange from './pages/ForcePasswordChange'
+import AccountPaused from './pages/AccountPaused'
 
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [mustChangePassword, setMustChangePassword] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
   const [checkingProfile, setCheckingProfile] = useState(true)
 
   useEffect(() => {
@@ -34,11 +36,12 @@ function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // Cada vez que cambia la sesión, verificamos si ese usuario
-  // tiene pendiente el cambio obligatorio de contraseña
+  // Cada vez que cambia la sesión, verificamos si el usuario
+  // tiene pendiente el cambio obligatorio de contraseña o está pausado
   useEffect(() => {
     if (!session?.user?.id) {
       setMustChangePassword(false)
+      setIsPaused(false)
       setCheckingProfile(false)
       return
     }
@@ -46,11 +49,12 @@ function App() {
     setCheckingProfile(true)
     supabase
       .from('profiles')
-      .select('must_change_password')
+      .select('must_change_password, is_paused')
       .eq('id', session.user.id)
       .single()
       .then(({ data }) => {
         setMustChangePassword(!!data?.must_change_password)
+        setIsPaused(!!data?.is_paused)
         setCheckingProfile(false)
       })
   }, [session])
@@ -63,9 +67,13 @@ function App() {
     )
   }
 
-  // Si el usuario está logueado pero tiene pendiente el cambio
-  // de contraseña, lo interceptamos antes de mostrar cualquier
-  // otra cosa — no puede navegar a ningún lado hasta cambiarla
+  // Si la cuenta está pausada, interceptamos antes que cualquier
+  // otra cosa — ni siquiera mostramos la pantalla de cambio de password
+  if (session && isPaused) {
+    return <AccountPaused />
+  }
+
+  // Si tiene pendiente el cambio obligatorio de contraseña
   if (session && mustChangePassword) {
     return (
       <ForcePasswordChange
@@ -77,17 +85,14 @@ function App() {
 
   return (
     <Routes>
-      {/* Ruta pública — demo sin login */}
       <Route path="/demo" element={<Demo />} />
       <Route path="/update-history-demo" element={<UpdateHistoryDemo />} />
 
-      {/* Ruta de login */}
       <Route
         path="/login"
         element={session ? <Navigate to="/inicio" /> : <Login />}
       />
 
-      {/* Rutas protegidas — requieren login */}
       <Route
         path="/inicio"
         element={session ? <Dashboard session={session} /> : <Navigate to="/login" />}
@@ -125,7 +130,6 @@ function App() {
         element={session ? <AdminUsers session={session} /> : <Navigate to="/login" />}
       />
 
-      {/* Ruta raíz — redirigir según estado */}
       <Route
         path="/"
         element={<Navigate to={session ? "/inicio" : "/login"} />}
