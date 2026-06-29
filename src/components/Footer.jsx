@@ -2,7 +2,7 @@ const Footer = () => {
   return (
     <footer role="contentinfo" aria-label="Pie de página" style={styles.footer}>
       <div style={styles.container}>
-        <div style={styles.section}>
+        <div style={styles.group}>
           <span style={styles.brand}>PropManager</span>
           <span style={styles.note}>Hecho en Salta</span>
         </div>
@@ -11,7 +11,7 @@ const Footer = () => {
           © {new Date().getFullYear()} · Todos los derechos reservados
         </div>
 
-        <div style={styles.section}>
+        <div style={styles.group}>
           <a href="/soporte" style={styles.link}>
             Soporte
           </a>
@@ -30,22 +30,20 @@ const Footer = () => {
 
 const styles = {
   footer: {
-    marginTop: "3rem",
     padding: "1rem 1.5rem",
-    borderTop: "1px solid rgba(15, 23, 42, 0.06)",
+    borderTop: "1px solid rgba(15, 23, 42, 0.08)",
     backgroundColor: "var(--surface, #ffffff)",
     color: "var(--text-muted, #475569)",
   },
   container: {
     maxWidth: "var(--app-max-width, 1120px)",
     margin: "0 auto",
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    display: "grid",
+    gridTemplateColumns: "1fr auto 1fr",
     alignItems: "center",
-    gap: "0.75rem",
+    gap: "1rem",
   },
-  section: {
+  group: {
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
@@ -59,6 +57,7 @@ const styles = {
     color: "var(--text-muted, #64748b)",
   },
   center: {
+    justifySelf: "center",
     fontSize: "0.95rem",
     color: "var(--text-muted, #64748b)",
   },
