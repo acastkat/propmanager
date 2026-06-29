@@ -2,14 +2,8 @@ const Footer = () => {
   return (
     <footer role="contentinfo" aria-label="Pie de página" style={styles.footer}>
       <div style={styles.content}>
-        <div style={styles.brandBlock}>
-          <strong style={styles.brand}>PropManager</strong>
-          <span style={styles.text}>
-            Gestión inmobiliaria clara, rápida y ordenada.
-          </span>
-        </div>
-
-        <span style={styles.copy}>© {new Date().getFullYear()} Hecho en Salta</span>
+        <span style={styles.brand}>PropManager</span>
+        <span style={styles.text}>Hecho en Salta · {new Date().getFullYear()}</span>
       </div>
     </footer>
   );
@@ -17,38 +11,33 @@ const Footer = () => {
 
 const styles = {
   footer: {
-    marginTop: "auto",
-    padding: "1rem 1.5rem 1.25rem",
-    borderTop: "1px solid var(--border, #e5e7eb)",
-    backgroundColor: "var(--surface, #f8fafc)",
-    color: "var(--text-muted, #64748b)",
+    position: "fixed",
+    left: "50%",
+    bottom: "1rem",
+    transform: "translateX(-50%)",
+    zIndex: 1000,
+    width: "min(92vw, 760px)",
+    padding: "0.7rem 1rem",
+    borderRadius: "999px",
+    backgroundColor: "var(--header-bg, #0f172a)",
+    color: "var(--header-color, #f8fafc)",
+    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.18)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
   },
   content: {
-    maxWidth: "var(--app-max-width, 1120px)",
-    margin: "0 auto",
     display: "flex",
-    flexWrap: "wrap",
+    alignItems: "center",
     justifyContent: "space-between",
-    alignItems: "center",
     gap: "0.75rem",
-  },
-  brandBlock: {
-    display: "flex",
     flexWrap: "wrap",
-    alignItems: "center",
-    gap: "0.5rem",
   },
   brand: {
-    color: "var(--text-primary, #0f172a)",
     fontWeight: 600,
-  },
-  text: {
-    color: "var(--text-muted, #64748b)",
     fontSize: "0.95rem",
   },
-  copy: {
-    color: "var(--text-muted, #64748b)",
+  text: {
     fontSize: "0.9rem",
+    opacity: 0.9,
   },
 };
 

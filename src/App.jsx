@@ -85,7 +85,7 @@ function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div style={{ minHeight: "100vh", paddingBottom: "4.5rem" }}>
       <Routes>
         <Route path="/demo" element={<Demo />} />
         <Route path="/update-history-demo" element={<UpdateHistoryDemo />} />
