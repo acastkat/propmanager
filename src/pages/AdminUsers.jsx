@@ -113,46 +113,46 @@ export default function AdminUsers({ session }) {
   }
 
   const handleTogglePause = async () => {
-  setActionLoading(true)
-  const newPausedState = !pauseModalUser.is_paused
+    setActionLoading(true)
+    const newPausedState = !pauseModalUser.is_paused
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ is_paused: newPausedState })
-    .eq('id', pauseModalUser.id)
+    const { error } = await supabase
+      .from('profiles')
+      .update({ is_paused: newPausedState })
+      .eq('id', pauseModalUser.id)
 
-  setActionLoading(false)
+    setActionLoading(false)
 
-  if (error) {
-    setError('No se pudo actualizar el estado del usuario: ' + error.message)
-  } else {
-    setSuccess(
-      newPausedState
-        ? `Usuario ${pauseModalUser.email} pausado correctamente.`
-        : `Usuario ${pauseModalUser.email} reactivado correctamente.`
-    )
-    fetchData()
+    if (error) {
+      setError('No se pudo actualizar el estado del usuario: ' + error.message)
+    } else {
+      setSuccess(
+        newPausedState
+          ? `Usuario ${pauseModalUser.email} pausado correctamente.`
+          : `Usuario ${pauseModalUser.email} reactivado correctamente.`
+      )
+      fetchData()
+    }
+    setPauseModalUser(null)
   }
-  setPauseModalUser(null)
-}
 
-const handleDeleteUser = async () => {
-  setActionLoading(true)
+  const handleDeleteUser = async () => {
+    setActionLoading(true)
 
-  const { data, error: fnError } = await supabase.functions.invoke('delete-user', {
-    body: { userId: deleteModalUser.id },
-  })
+    const { data, error: fnError } = await supabase.functions.invoke('delete-user', {
+      body: { userId: deleteModalUser.id },
+    })
 
-  setActionLoading(false)
+    setActionLoading(false)
 
-  if (fnError || data?.error) {
-    setError('No se pudo eliminar el usuario: ' + (fnError?.message || data?.error))
-  } else {
-    setSuccess(`Usuario ${deleteModalUser.email} eliminado correctamente.`)
-    fetchData()
+    if (fnError || data?.error) {
+      setError('No se pudo eliminar el usuario: ' + (fnError?.message || data?.error))
+    } else {
+      setSuccess(`Usuario ${deleteModalUser.email} eliminado correctamente.`)
+      fetchData()
+    }
+    setDeleteModalUser(null)
   }
-  setDeleteModalUser(null)
-}
 
   const roleColors = {
     admin: { text: 'text-blue-700',  bg: 'bg-blue-50'  },
@@ -172,6 +172,68 @@ const handleDeleteUser = async () => {
     <MainLayout session={session} role={profile?.role}>
       <div className="p-8">
 
+        {pauseModalUser && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
+              <p className="text-lg font-semibold text-stone-800 mb-2">
+                {pauseModalUser.is_paused ? 'Reactivar usuario' : 'Pausar usuario'}
+              </p>
+              <p className="text-sm text-stone-500 mb-6">
+                {pauseModalUser.is_paused ? (
+                  <>
+                    Estás a punto de reactivar a{' '}
+                    <span className="font-semibold text-stone-800">{pauseModalUser.email}</span>.
+                    Vuelve a tener acceso normal a la app.
+                  </>
+                ) : (
+                  <>
+                    Estás a punto de pausar a{' '}
+                    <span className="font-semibold text-stone-800">{pauseModalUser.email}</span>.
+                    No podrá ingresar a la app hasta que lo reactives, pero sus datos se mantienen intactos.
+                  </>
+                )}
+              </p>
+              <div className="flex gap-3">
+                <button onClick={handleTogglePause} disabled={actionLoading}
+                  className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                  {actionLoading ? 'Procesando...' : 'Aceptar'}
+                </button>
+                <button onClick={() => setPauseModalUser(null)} disabled={actionLoading}
+                  className="flex-1 border border-stone-200 text-stone-500 py-2.5 rounded-lg text-sm hover:bg-stone-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {deleteModalUser && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-xl">
+              <p className="text-lg font-semibold text-stone-800 mb-2">Eliminar usuario</p>
+              <p className="text-sm text-stone-500 mb-6">
+                Estás a punto de eliminar de forma definitiva a{' '}
+                <span className="font-semibold text-stone-800">{deleteModalUser.email}</span>.
+                Esta acción no se puede deshacer.
+              </p>
+              <div className="flex gap-3">
+                <button onClick={handleDeleteUser} disabled={actionLoading}
+                  className="flex-1 bg-red-500 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50 transition-colors"
+                >
+                  {actionLoading ? 'Eliminando...' : 'Aceptar'}
+                </button>
+                <button onClick={() => setDeleteModalUser(null)} disabled={actionLoading}
+                  className="flex-1 border border-stone-200 text-stone-500 py-2.5 rounded-lg text-sm hover:bg-stone-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="bg-blue-50 rounded-2xl px-8 py-6 mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold text-blue-900">Usuarios</h1>
@@ -190,6 +252,12 @@ const handleDeleteUser = async () => {
         {success && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-6 py-4 mb-6">
             <p className="text-sm text-green-700">{success}</p>
+          </div>
+        )}
+
+        {error && !showForm && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-6 py-4 mb-6">
+            <p className="text-sm text-red-600">{error}</p>
           </div>
         )}
 
@@ -327,18 +395,28 @@ const handleDeleteUser = async () => {
           </div>
           {users.map((user, i) => {
             const colors = roleColors[user.role] || roleColors.owner
+            const isSelf = user.id === session.user.id
             return (
               <div
                 key={user.id}
-                className={`flex items-center gap-4 px-6 py-4 ${i < users.length - 1 ? 'border-b border-stone-100' : ''}`}
+                className={`flex items-center gap-4 px-6 py-4 ${i < users.length - 1 ? 'border-b border-stone-100' : ''} ${user.is_paused ? 'bg-stone-50' : ''}`}
               >
-                <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-medium text-sm">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-medium text-sm ${
+                  user.is_paused ? 'bg-stone-200 text-stone-500' : 'bg-blue-50 text-blue-600'
+                }`}>
                   {user.full_name?.[0] || user.email?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-stone-800">
-                    {user.full_name || '—'}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-medium ${user.is_paused ? 'text-stone-500' : 'text-stone-800'}`}>
+                      {user.full_name || '—'}
+                    </p>
+                    {user.is_paused && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium border border-amber-200">
+                        ⏸ Pausado
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-stone-400">{user.email}</p>
                 </div>
                 <span className={`text-xs px-3 py-1 rounded-full font-medium ${colors.text} ${colors.bg}`}>
@@ -347,6 +425,27 @@ const handleDeleteUser = async () => {
                 <p className="text-xs text-stone-400">
                   {new Date(user.created_at).toLocaleDateString('es-AR')}
                 </p>
+
+                {!isSelf && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setPauseModalUser(user)}
+                      className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                        user.is_paused
+                          ? 'border-green-200 text-green-700 hover:bg-green-50'
+                          : 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                      }`}
+                    >
+                      {user.is_paused ? 'Reactivar' : 'Pausar'}
+                    </button>
+                    <button
+                      onClick={() => setDeleteModalUser(user)}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                )}
               </div>
             )
           })}
