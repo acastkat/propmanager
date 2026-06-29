@@ -85,58 +85,60 @@ function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", paddingBottom: "4.5rem" }}>
-      <Routes>
-        <Route path="/demo" element={<Demo />} />
-        <Route path="/update-history-demo" element={<UpdateHistoryDemo />} />
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/demo" element={<Demo />} />
+          <Route path="/update-history-demo" element={<UpdateHistoryDemo />} />
 
-        <Route
-          path="/login"
-          element={session ? <Navigate to="/inicio" /> : <Login />}
-        />
+          <Route
+            path="/login"
+            element={session ? <Navigate to="/inicio" /> : <Login />}
+          />
 
-        <Route
-          path="/inicio"
-          element={session ? <Dashboard session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/propiedades"
-          element={session ? <Properties session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/propiedades/:id"
-          element={session ? <Properties session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/servicios"
-          element={session ? <Services session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/servicios/:id"
-          element={session ? <Services session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/pagos"
-          element={session ? <Payments session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/pagos/:id"
-          element={session ? <Payments session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/alertas"
-          element={session ? <Alerts session={session} /> : <Navigate to="/login" />}
-        />
-        <Route
-          path="/admin/usuarios"
-          element={session ? <AdminUsers session={session} /> : <Navigate to="/login" />}
-        />
+          <Route
+            path="/inicio"
+            element={session ? <Dashboard session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/propiedades"
+            element={session ? <Properties session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/propiedades/:id"
+            element={session ? <Properties session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/servicios"
+            element={session ? <Services session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/servicios/:id"
+            element={session ? <Services session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/pagos"
+            element={session ? <Payments session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/pagos/:id"
+            element={session ? <Payments session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/alertas"
+            element={session ? <Alerts session={session} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/admin/usuarios"
+            element={session ? <AdminUsers session={session} /> : <Navigate to="/login" />}
+          />
 
-        <Route
-          path="/"
-          element={<Navigate to={session ? "/inicio" : "/login"} />}
-        />
-      </Routes>
+          <Route
+            path="/"
+            element={<Navigate to={session ? "/inicio" : "/login"} />}
+          />
+        </Routes>
+      </main>
       <Footer />
     </div>
   )

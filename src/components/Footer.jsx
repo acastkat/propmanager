@@ -1,44 +1,77 @@
 const Footer = () => {
   return (
     <footer role="contentinfo" aria-label="Pie de página" style={styles.footer}>
-      <div style={styles.content}>
-        <span style={styles.brand}>PropManager</span>
-        <span style={styles.text}>Hecho en Salta · {new Date().getFullYear()}</span>
+      <div style={styles.container}>
+        <div style={styles.section}>
+          <span style={styles.brand}>PropManager</span>
+          <span style={styles.note}>Hecho en Salta</span>
+        </div>
+
+        <div style={styles.center}>
+          © {new Date().getFullYear()} · Todos los derechos reservados
+        </div>
+
+        <div style={styles.section}>
+          <a href="/soporte" style={styles.link}>
+            Soporte
+          </a>
+          <a href="/privacidad" style={styles.link}>
+            Privacidad
+          </a>
+          <a href="/terminos" style={styles.link}>
+            Términos
+          </a>
+          <span style={styles.version}>v2.4.1</span>
+        </div>
       </div>
     </footer>
-  );
-};
+  )
+}
 
 const styles = {
   footer: {
-    position: "fixed",
-    left: "50%",
-    bottom: "1rem",
-    transform: "translateX(-50%)",
-    zIndex: 1000,
-    width: "min(92vw, 760px)",
-    padding: "0.7rem 1rem",
-    borderRadius: "999px",
-    backgroundColor: "var(--header-bg, #0f172a)",
-    color: "var(--header-color, #f8fafc)",
-    boxShadow: "0 10px 30px rgba(15, 23, 42, 0.18)",
-    border: "1px solid rgba(255, 255, 255, 0.12)",
+    marginTop: "3rem",
+    padding: "1rem 1.5rem",
+    borderTop: "1px solid rgba(15, 23, 42, 0.06)",
+    backgroundColor: "var(--surface, #ffffff)",
+    color: "var(--text-muted, #475569)",
   },
-  content: {
+  container: {
+    maxWidth: "var(--app-max-width, 1120px)",
+    margin: "0 auto",
+    display: "flex",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "0.75rem",
+  },
+  section: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
     gap: "0.75rem",
     flexWrap: "wrap",
   },
   brand: {
     fontWeight: 600,
+  },
+  note: {
     fontSize: "0.95rem",
+    color: "var(--text-muted, #64748b)",
   },
-  text: {
+  center: {
+    fontSize: "0.95rem",
+    color: "var(--text-muted, #64748b)",
+  },
+  link: {
+    color: "var(--text-muted, #475569)",
+    textDecoration: "none",
+    fontSize: "0.95rem",
+    opacity: 0.85,
+  },
+  version: {
     fontSize: "0.9rem",
-    opacity: 0.9,
+    color: "var(--text-muted, #94a3b8)",
   },
-};
+}
 
-export default Footer;
+export default Footer
