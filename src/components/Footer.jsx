@@ -9,7 +9,7 @@ const Footer = () => {
           </span>
         </div>
 
-        <span style={styles.copy}>© {new Date().getFullYear()} PropManager</span>
+        <span style={styles.copy}>© {new Date().getFullYear()} Hecho en Tartagal, Salta, Argentina</span>
       </div>
     </footer>
   );
