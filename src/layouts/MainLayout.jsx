@@ -66,18 +66,23 @@ export default function MainLayout({ children, session, role }) {
         </nav>
 
         {/* Usuario y logout */}
-        <div className="px-6 py-4 border-t border-stone-200">
-          <p className="text-sm font-medium text-stone-700">
-            {session?.user?.email}
-          </p>
-          <p className="text-xs text-stone-400 mb-3">{role}</p>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-stone-400 hover:text-red-500 transition-colors"
-          >
-            Cerrar sesión
-          </button>
-        </div>
+<div className="px-6 py-4 border-t border-stone-200">
+  <button
+    onClick={() => navigate('/perfil')}
+    className="text-left w-full mb-3 hover:opacity-70 transition-opacity"
+  >
+    <p className="text-sm font-medium text-stone-700">
+      {session?.user?.email}
+    </p>
+    <p className="text-xs text-stone-400">{role}</p>
+  </button>
+  <button
+    onClick={handleLogout}
+    className="text-xs text-stone-400 hover:text-red-500 transition-colors"
+  >
+    Cerrar sesión
+  </button>
+</div>
       </aside>
 
       {/* Contenido principal */}

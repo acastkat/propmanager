@@ -14,6 +14,7 @@ import UpdateHistoryDemo from './pages/UpdateHistoryDemo'
 import ForcePasswordChange from './pages/ForcePasswordChange'
 import AccountPaused from './pages/AccountPaused'
 import Footer from "./components/Footer";
+import MyProfile from './pages/MyProfile'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -137,6 +138,10 @@ function App() {
             path="/"
             element={<Navigate to={session ? "/inicio" : "/login"} />}
           />
+          <Route
+  path="/perfil"
+  element={session ? <MyProfile session={session} /> : <Navigate to="/login" />}
+/>
         </Routes>
       </main>
       <Footer />
